@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }} — AI Lost & Found{% endblock %}
+{% block page_title %}Item Detail{% endblock %}
+
+{% block content %}
+
+{% if is_new %}
+<div class="alert-banner success">
+  <i class="fas fa-check-circle"></i>
+  Item reported successfully!
+  {% if match_count > 0 %}
+    AI found <strong>{{ match_count }}</strong> potential match{% if match_count > 1 %}es{% endif %}! Scroll down to view them.
+  {% else %}
+    We'll notify you when a match is found.
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="detail-grid">
+  <!-- Left: Item info -->
+  <div class="detail-main">
+    <div class="detail-card">
+      <div class="detail-header {{ item.type }}">
+        <span class="type-badge-lg {{ item.type }}">
+          <i class="fas {% if item.type=='lost' %}fa-search{% else %}fa-box-open{% endif %}"></i>
+          {{ item.type|title }}
+        </span>
+        <span class="status-badge {{ item.status }}">{{ item.status|title }}</span>
+      </div>
+
+      {% if item.image_path %}
+      <div class="detail-image">
+        <img src="/uploads/{{ item.image_path }}" alt="{{ item.title }}"/>
+      </div>
+      {% endif %}
+
+      <div class="detail-body">
+        <h1>{{ item.title }}</h1>
+        <div class="detail-meta-grid">
+          <div class="meta-item">
+            <label><i class="fas fa-tag"></i> Category</label>
+            <span>{{ item.category }}</span>
+          </div>
+          <div class="meta-item">
+            <label><i class="fas fa-map-marker-alt"></i> Location</label>
+            <span>{{ item.location }}</span>
+          </div>
+          <div class="meta-item">
+            <label><i class="fas fa-calendar"></i> Date</label>
+            <span>{{ item.date_occurred }}</span>
+          </div>
+          {% if item.color %}
+          <div class="meta-item">
+            <label><i class="fas fa-palette"></i> Colour</label>
+            <span>{{ item.color }}</span>
+          </div>
+          {% endif %}
+          {% if item.brand %}
+          <div class="meta-item">
+            <label><i class="fas fa-trademark"></i> Brand</label>
+            <span>{{ item.brand }}</span>
+          </div>
+          {% endif %}
+          <div class="meta-item">
+            <label><i class="fas fa-clock"></i> Reported</label>
+            <span>{{ item.created_at }}</span>
+          </div>
+        </div>
+
+        <div class="detail-description">
+          <h3><i class="fas fa-align-left"></i> Description</h3>
+          <p>{{ item.description }}</p>
+        </div>
+
+        <div class="contact-box">
+          <h3><i class="fas fa-user"></i> Contact Information</h3>
+          <p><strong>Name:</strong> {{ item.contact_name }}</p>
+          <p><strong>Email:</strong> <a href="mailto:{{ item.contact_email }}">{{ item.contact_email }}</a></p>
+          {% if item.contact_phone %}
+          <p><strong>Phone:</strong> <a href="tel:{{ item.contact_phone }}">{{ item.contact_phone }}</a></p>
+          {% endif %}
+        </div>
+
+        <div class="detail-actions">
+          {% if item.status == 'active' %}
+          <button onclick="resolveItem({{ item.id }})" class="btn-resolve">
+            <i class="fas fa-check"></i> Mark as Resolved
+          </button>
+          {% endif %}
+          <button onclick="rematch({{ item.id }})" class="btn-rematch">
+            <i class="fas fa-robot"></i> Re-run AI Match
+          </button>
+          <button onclick="deleteItem({{ item.id }})" class="btn-delete">
+            <i class="fas fa-trash"></i> Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: AI Matches -->
+  <div class="detail-sidebar">
+    <div class="matches-panel">
+      <h2><i class="fas fa-robot"></i> AI Matches
+        <span class="match-count">{{ matches|length }}</span>
+      </h2>
+
+      {% if matches %}
+      {% for m in matches %}
+      <div class="match-card" id="match-{{ m.id }}">
+        <div class="match-score {{ score_badge(m.score) }}">
+          {{ (m.score * 100)|int }}%
+          <small>match</small>
+        </div>
+        <div class="match-info">
+          <div class="match-side lost">
+            <span class="match-label">Lost</span>
+            {% if m.lost_image %}
+            <img src="/uploads/{{ m.lost_image }}" alt="lost item"/>
+            {% else %}
+            <div class="match-img-ph lost"><i class="fas fa-search"></i></div>
+            {% endif %}
+            <p>{{ m.lost_title }}</p>
+            <small>{{ m.lost_contact }} · {{ m.lost_email }}</small>
+          </div>
+          <div class="match-connector">
+            <i class="fas fa-exchange-alt"></i>
+          </div>
+          <div class="match-side found">
+            <span class="match-label">Found</span>
+            {% if m.found_image %}
+            <img src="/uploads/{{ m.found_image }}" alt="found item"/>
+            {% else %}
+            <div class="match-img-ph found"><i class="fas fa-box-open"></i></div>
+            {% endif %}
+            <p>{{ m.found_title }}</p>
+            <small>{{ m.found_contact }} · {{ m.found_email }}</small>
+          </div>
+        </div>
+        {% if m.status == 'pending' %}
+        <div class="match-actions">
+          <button onclick="confirmMatch({{ m.id }})" class="btn-confirm">
+            <i class="fas fa-check"></i> Confirm
+          </button>
+          <button onclick="rejectMatch({{ m.id }})" class="btn-reject">
+            <i class="fas fa-times"></i> Not a Match
+          </button>
+        </div>
+        {% else %}
+        <div class="match-status-badge {{ m.status }}">
+          {{ m.status|title }}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="no-matches">
+        <i class="fas fa-robot"></i>
+        <p>No AI matches found yet.</p>
+        <button onclick="rematch({{ item.id }})" class="btn-rematch small">
+          <i class="fas fa-sync"></i> Run AI Matching
+        </button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+async function resolveItem(id) {
+  if (!confirm('Mark this item as resolved?')) return;
+  const r = await fetch(`/item/${id}/resolve`, {method:'POST'});
+  if (r.ok) location.reload();
+}
+
+async function deleteItem(id) {
+  if (!confirm('Permanently delete this item?')) return;
+  const r = await fetch(`/item/${id}/delete`, {method:'POST'});
+  if (r.ok) window.location.href = '/';
+}
+
+async function rematch(id) {
+  const btn = event.target;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running AI...';
+  btn.disabled = true;
+  const r = await fetch(`/api/rematch/${id}`, {method:'POST'});
+  const data = await r.json();
+  alert(`AI matching complete! Found ${data.count} potential match(es).`);
+  location.reload();
+}
+
+async function confirmMatch(id) {
+  await fetch(`/match/${id}/confirm`, {method:'POST'});
+  document.querySelector(`#match-${id} .match-actions`).innerHTML =
+    '<div class="match-status-badge confirmed">Confirmed</div>';
+}
+
+async function rejectMatch(id) {
+  await fetch(`/match/${id}/reject`, {method:'POST'});
+  document.querySelector(`#match-${id} .match-actions`).innerHTML =
+    '<div class="match-status-badge rejected">Rejected</div>';
+}
+</script>
+{% endblock %}

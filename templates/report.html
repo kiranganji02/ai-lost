@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Report {{ item_type|title }} Item — AI Lost & Found{% endblock %}
+{% block page_title %}Report a {{ item_type|title }} Item{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <div class="form-card">
+    <!-- Type toggle -->
+    <div class="type-toggle">
+      <a href="/report?type=lost"  class="toggle-btn {% if item_type=='lost'  %}active lost-active{% endif %}">
+        <i class="fas fa-exclamation-circle"></i> I Lost Something
+      </a>
+      <a href="/report?type=found" class="toggle-btn {% if item_type=='found' %}active found-active{% endif %}">
+        <i class="fas fa-hand-holding"></i> I Found Something
+      </a>
+    </div>
+
+    <form method="POST" action="/report" enctype="multipart/form-data" id="reportForm">
+      <input type="hidden" name="type" value="{{ item_type }}"/>
+
+      <div class="form-grid">
+        <!-- Title -->
+        <div class="form-group full-width">
+          <label for="title"><i class="fas fa-heading"></i> Item Title *</label>
+          <input type="text" id="title" name="title" required
+                 placeholder="e.g. Black iPhone 15 Pro with cracked screen"/>
+        </div>
+
+        <!-- Category -->
+        <div class="form-group">
+          <label for="category"><i class="fas fa-tag"></i> Category *</label>
+          <select id="category" name="category" required>
+            <option value="">-- Select category --</option>
+            {% for cat in categories %}
+            <option value="{{ cat }}">{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Date -->
+        <div class="form-group">
+          <label for="date_occurred">
+            <i class="fas fa-calendar"></i>
+            Date {{ 'Lost' if item_type=='lost' else 'Found' }} *
+          </label>
+          <input type="date" id="date_occurred" name="date_occurred" required/>
+        </div>
+
+        <!-- Location -->
+        <div class="form-group full-width">
+          <label for="location"><i class="fas fa-map-marker-alt"></i> Location *</label>
+          <input type="text" id="location" name="location" required
+                 placeholder="e.g. Central Park, New York / Gate 5, Airport Terminal 2"/>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group full-width">
+          <label for="description"><i class="fas fa-align-left"></i> Description *</label>
+          <textarea id="description" name="description" required rows="4"
+                    placeholder="Describe the item in detail — size, colour, markings, serial number, condition..."></textarea>
+        </div>
+
+        <!-- Color -->
+        <div class="form-group">
+          <label for="color"><i class="fas fa-palette"></i> Colour</label>
+          <input type="text" id="color" name="color"
+                 placeholder="e.g. Black, Silver, Red"/>
+        </div>
+
+        <!-- Brand -->
+        <div class="form-group">
+          <label for="brand"><i class="fas fa-trademark"></i> Brand / Make</label>
+          <input type="text" id="brand" name="brand"
+                 placeholder="e.g. Apple, Nike, Samsung"/>
+        </div>
+
+        <!-- Image upload -->
+        <div class="form-group full-width">
+          <label for="image"><i class="fas fa-camera"></i> Upload Photo</label>
+          <div class="image-upload-area" id="uploadArea" onclick="document.getElementById('image').click()">
+            <input type="file" id="image" name="image" accept="image/*" style="display:none"
+                   onchange="previewImage(this)"/>
+            <div id="uploadPlaceholder">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p>Click or drag to upload a photo</p>
+              <small>JPG, PNG, GIF, WEBP — max 10 MB</small>
+            </div>
+            <img id="imagePreview" style="display:none; max-height:200px; border-radius:8px;"/>
+          </div>
+        </div>
+
+        <!-- Contact -->
+        <div class="form-group">
+          <label for="contact_name"><i class="fas fa-user"></i> Your Name *</label>
+          <input type="text" id="contact_name" name="contact_name" required/>
+        </div>
+        <div class="form-group">
+          <label for="contact_email"><i class="fas fa-envelope"></i> Email *</label>
+          <input type="email" id="contact_email" name="contact_email" required/>
+        </div>
+        <div class="form-group full-width">
+          <label for="contact_phone"><i class="fas fa-phone"></i> Phone (optional)</label>
+          <input type="tel" id="contact_phone" name="contact_phone"/>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a href="/" class="btn-secondary">Cancel</a>
+        <button type="submit" class="btn-submit {{ item_type }}" id="submitBtn">
+          <span id="submitText">
+            <i class="fas fa-paper-plane"></i>
+            Submit Report &amp; Run AI Matching
+          </span>
+          <span id="submitLoading" style="display:none">
+            <i class="fas fa-spinner fa-spin"></i> Analysing...
+          </span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function previewImage(input) {
+  const preview = document.getElementById('imagePreview');
+  const placeholder = document.getElementById('uploadPlaceholder');
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      placeholder.style.display = 'none';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+document.getElementById('reportForm').addEventListener('submit', function() {
+  document.getElementById('submitText').style.display = 'none';
+  document.getElementById('submitLoading').style.display = 'inline';
+});
+
+// Drag and drop
+const uploadArea = document.getElementById('uploadArea');
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadArea.classList.remove('drag-over');
+  const fileInput = document.getElementById('image');
+  fileInput.files = e.dataTransfer.files;
+  previewImage(fileInput);
+});
+</script>
+{% endblock %}

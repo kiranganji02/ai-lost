@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}AI Matches — AI Lost & Found{% endblock %}
+{% block page_title %}AI Match Dashboard{% endblock %}
+
+{% block content %}
+<div class="matches-page">
+  <div class="matches-intro">
+    <div class="intro-icon"><i class="fas fa-robot"></i></div>
+    <div>
+      <h2>AI-Powered Matching</h2>
+      <p>Our AI compares item descriptions, categories, colours, brands, and images to find potential matches between lost and found reports.</p>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="score-legend">
+    <span class="legend-item"><span class="dot high"></span> 70–100% High confidence</span>
+    <span class="legend-item"><span class="dot medium"></span> 45–69% Medium confidence</span>
+    <span class="legend-item"><span class="dot low"></span> 30–44% Low confidence</span>
+  </div>
+
+  {% if matches %}
+  <div class="all-matches-grid">
+    {% for m in matches %}
+    <div class="full-match-card" id="fmatch-{{ m.id }}">
+      <!-- Score circle -->
+      <div class="score-circle {{ score_badge(m.score) }}">
+        <span class="score-val">{{ (m.score * 100)|int }}</span>
+        <span class="score-unit">%</span>
+      </div>
+
+      <!-- Sides -->
+      <div class="fm-sides">
+        <!-- Lost side -->
+        <div class="fm-side lost">
+          <span class="fm-badge lost">LOST</span>
+          {% if m.lost_image %}
+          <img src="/uploads/{{ m.lost_image }}" alt="lost"/>
+          {% else %}
+          <div class="fm-ph lost"><i class="fas fa-search"></i></div>
+          {% endif %}
+          <h4>{{ m.lost_title }}</h4>
+          <p><i class="fas fa-user"></i> {{ m.lost_contact }}</p>
+          <a href="mailto:{{ m.lost_email }}" class="fm-email">{{ m.lost_email }}</a>
+          <a href="/item/{{ m.lost_id }}" class="fm-view">View item →</a>
+        </div>
+
+        <div class="fm-arrow"><i class="fas fa-exchange-alt"></i></div>
+
+        <!-- Found side -->
+        <div class="fm-side found">
+          <span class="fm-badge found">FOUND</span>
+          {% if m.found_image %}
+          <img src="/uploads/{{ m.found_image }}" alt="found"/>
+          {% else %}
+          <div class="fm-ph found"><i class="fas fa-box-open"></i></div>
+          {% endif %}
+          <h4>{{ m.found_title }}</h4>
+          <p><i class="fas fa-user"></i> {{ m.found_contact }}</p>
+          <a href="mailto:{{ m.found_email }}" class="fm-email">{{ m.found_email }}</a>
+          <a href="/item/{{ m.found_id }}" class="fm-view">View item →</a>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="fm-footer">
+        <span class="fm-date"><i class="fas fa-clock"></i> {{ m.created_at }}</span>
+        {% if m.status == 'pending' %}
+        <div class="fm-actions">
+          <button onclick="confirmMatch({{ m.id }})" class="btn-confirm">
+            <i class="fas fa-check"></i> Confirm Match
+          </button>
+          <button onclick="rejectMatch({{ m.id }})" class="btn-reject">
+            <i class="fas fa-times"></i> Not a Match
+          </button>
+        </div>
+        {% else %}
+        <span class="fm-status {{ m.status }}">
+          <i class="fas {% if m.status=='confirmed' %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+          {{ m.status|title }}
+        </span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="empty-state large">
+    <i class="fas fa-robot"></i>
+    <h3>No matches yet</h3>
+    <p>Matches will appear automatically when you report items that are similar to existing reports.</p>
+    <div class="empty-actions">
+      <a href="/report?type=lost"  class="btn-primary"><i class="fas fa-exclamation-circle"></i> Report Lost</a>
+      <a href="/report?type=found" class="btn-secondary"><i class="fas fa-hand-holding"></i> Report Found</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+async function confirmMatch(id) {
+  await fetch(`/match/${id}/confirm`, {method:'POST'});
+  const card = document.querySelector(`#fmatch-${id} .fm-actions`);
+  card.outerHTML = '<span class="fm-status confirmed"><i class="fas fa-check-circle"></i> Confirmed</span>';
+}
+async function rejectMatch(id) {
+  await fetch(`/match/${id}/reject`, {method:'POST'});
+  const card = document.querySelector(`#fmatch-${id} .fm-actions`);
+  card.outerHTML = '<span class="fm-status rejected"><i class="fas fa-times-circle"></i> Rejected</span>';
+}
+</script>
+{% endblock %}

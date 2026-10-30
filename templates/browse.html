@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Browse Items — AI Lost & Found{% endblock %}
+{% block page_title %}Browse {{ current_type|title }} Items{% endblock %}
+
+{% block content %}
+<!-- Filters -->
+<div class="browse-filters">
+  <div class="type-tabs">
+    <a href="/browse?type=lost{% if current_category %}&category={{ current_category }}{% endif %}{% if search %}&search={{ search }}{% endif %}"
+       class="tab {% if current_type=='lost' %}active lost-tab{% endif %}">
+      <i class="fas fa-search"></i> Lost Items
+    </a>
+    <a href="/browse?type=found{% if current_category %}&category={{ current_category }}{% endif %}{% if search %}&search={{ search }}{% endif %}"
+       class="tab {% if current_type=='found' %}active found-tab{% endif %}">
+      <i class="fas fa-box-open"></i> Found Items
+    </a>
+  </div>
+
+  <form class="filter-form" method="get" action="/browse">
+    <input type="hidden" name="type" value="{{ current_type }}"/>
+    <input type="text" name="search" placeholder="Search items..." value="{{ search }}"
+           class="search-input"/>
+    <select name="category" class="cat-select">
+      <option value="">All Categories</option>
+      {% for cat in categories %}
+      <option value="{{ cat }}" {% if cat==current_category %}selected{% endif %}>{{ cat }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn-filter"><i class="fas fa-filter"></i> Filter</button>
+    <a href="/browse?type={{ current_type }}" class="btn-clear">Clear</a>
+  </form>
+</div>
+
+<!-- Results -->
+<div class="results-header">
+  <span class="results-count">{{ items|length }} item{% if items|length != 1 %}s{% endif %} found</span>
+  <a href="/report?type={{ current_type }}" class="btn-report-mini">
+    <i class="fas fa-plus"></i> Report {{ current_type|title }}
+  </a>
+</div>
+
+{% if items %}
+<div class="browse-grid">
+  {% for item in items %}
+  <a href="/item/{{ item.id }}" class="browse-card {{ item.type }}">
+    <div class="card-img">
+      {% if item.image_path %}
+      <img src="/uploads/{{ item.image_path }}" alt="{{ item.title }}"/>
+      {% else %}
+      <div class="img-placeholder {{ item.type }}">
+        <i class="fas {% if item.type=='lost' %}fa-search{% else %}fa-box-open{% endif %}"></i>
+      </div>
+      {% endif %}
+      <span class="card-badge {{ item.type }}">{{ item.type|title }}</span>
+    </div>
+    <div class="card-body">
+      <h3>{{ item.title }}</h3>
+      <p class="card-desc">{{ item.description[:100] }}{% if item.description|length > 100 %}...{% endif %}</p>
+      <div class="card-meta">
+        <span><i class="fas fa-tag"></i> {{ item.category }}</span>
+        <span><i class="fas fa-map-marker-alt"></i> {{ item.location }}</span>
+        <span><i class="fas fa-calendar"></i> {{ item.date_occurred }}</span>
+        {% if item.color %}<span><i class="fas fa-palette"></i> {{ item.color }}</span>{% endif %}
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state large">
+  <i class="fas fa-search-minus"></i>
+  <h3>No items found</h3>
+  <p>Try adjusting your filters or be the first to report!</p>
+  <a href="/report?type={{ current_type }}" class="btn-primary">
+    <i class="fas fa-plus"></i> Report {{ current_type|title }} Item
+  </a>
+</div>
+{% endif %}
+{% endblock %}

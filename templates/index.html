@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — AI Lost & Found{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- ── Stats ── -->
+<section class="stats-grid">
+  <div class="stat-card lost">
+    <div class="stat-icon"><i class="fas fa-search"></i></div>
+    <div class="stat-info">
+      <span class="stat-number">{{ stats.total_lost }}</span>
+      <span class="stat-label">Lost Items</span>
+    </div>
+  </div>
+  <div class="stat-card found">
+    <div class="stat-icon"><i class="fas fa-box-open"></i></div>
+    <div class="stat-info">
+      <span class="stat-number">{{ stats.total_found }}</span>
+      <span class="stat-label">Found Items</span>
+    </div>
+  </div>
+  <div class="stat-card matched">
+    <div class="stat-icon"><i class="fas fa-check-double"></i></div>
+    <div class="stat-info">
+      <span class="stat-number">{{ stats.total_matched }}</span>
+      <span class="stat-label">Confirmed Matches</span>
+    </div>
+  </div>
+  <div class="stat-card active">
+    <div class="stat-icon"><i class="fas fa-clock"></i></div>
+    <div class="stat-info">
+      <span class="stat-number">{{ stats.active_cases }}</span>
+      <span class="stat-label">Active Cases</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── Quick Actions ── -->
+<section class="quick-actions">
+  <a href="/report?type=lost"  class="action-btn btn-lost">
+    <i class="fas fa-exclamation-circle"></i> Report a Lost Item
+  </a>
+  <a href="/report?type=found" class="action-btn btn-found">
+    <i class="fas fa-hand-holding"></i> Report a Found Item
+  </a>
+  <a href="/matches"           class="action-btn btn-matches">
+    <i class="fas fa-robot"></i> View AI Matches
+  </a>
+  <a href="/browse"            class="action-btn btn-browse">
+    <i class="fas fa-list"></i> Browse All Items
+  </a>
+</section>
+
+<!-- ── How it works ── -->
+<section class="how-it-works">
+  <h2>How It Works</h2>
+  <div class="steps-grid">
+    <div class="step">
+      <div class="step-num">1</div>
+      <i class="fas fa-file-alt step-icon"></i>
+      <h3>Report</h3>
+      <p>Submit details & photo of your lost or found item.</p>
+    </div>
+    <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <i class="fas fa-robot step-icon"></i>
+      <h3>AI Matching</h3>
+      <p>Our AI analyses text, colours, images & categories to find matches.</p>
+    </div>
+    <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <i class="fas fa-bell step-icon"></i>
+      <h3>Get Notified</h3>
+      <p>Receive instant notifications when a match is found.</p>
+    </div>
+    <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <i class="fas fa-handshake step-icon"></i>
+      <h3>Reunite</h3>
+      <p>Contact each other and get your item back!</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Recent Items ── -->
+<div class="two-col-grid">
+  <!-- Lost -->
+  <section class="recent-section">
+    <div class="section-header">
+      <h2><i class="fas fa-search text-lost"></i> Recent Lost Items</h2>
+      <a href="/browse?type=lost" class="see-all">See all →</a>
+    </div>
+    {% if recent_lost %}
+    <div class="items-list">
+      {% for item in recent_lost %}
+      <a href="/item/{{ item.id }}" class="item-card">
+        <div class="item-img">
+          {% if item.image_path %}
+          <img src="/uploads/{{ item.image_path }}" alt="{{ item.title }}"/>
+          {% else %}
+          <div class="img-placeholder lost"><i class="fas fa-search"></i></div>
+          {% endif %}
+        </div>
+        <div class="item-info">
+          <h4>{{ item.title }}</h4>
+          <p class="item-cat"><i class="fas fa-tag"></i> {{ item.category }}</p>
+          <p class="item-loc"><i class="fas fa-map-marker-alt"></i> {{ item.location }}</p>
+          <p class="item-date"><i class="fas fa-calendar"></i> {{ item.date_occurred }}</p>
+        </div>
+        <span class="type-badge lost">Lost</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-search-minus"></i>
+      <p>No lost items reported yet.</p>
+      <a href="/report?type=lost" class="btn-primary">Report Lost Item</a>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- Found -->
+  <section class="recent-section">
+    <div class="section-header">
+      <h2><i class="fas fa-box-open text-found"></i> Recent Found Items</h2>
+      <a href="/browse?type=found" class="see-all">See all →</a>
+    </div>
+    {% if recent_found %}
+    <div class="items-list">
+      {% for item in recent_found %}
+      <a href="/item/{{ item.id }}" class="item-card">
+        <div class="item-img">
+          {% if item.image_path %}
+          <img src="/uploads/{{ item.image_path }}" alt="{{ item.title }}"/>
+          {% else %}
+          <div class="img-placeholder found"><i class="fas fa-box-open"></i></div>
+          {% endif %}
+        </div>
+        <div class="item-info">
+          <h4>{{ item.title }}</h4>
+          <p class="item-cat"><i class="fas fa-tag"></i> {{ item.category }}</p>
+          <p class="item-loc"><i class="fas fa-map-marker-alt"></i> {{ item.location }}</p>
+          <p class="item-date"><i class="fas fa-calendar"></i> {{ item.date_occurred }}</p>
+        </div>
+        <span class="type-badge found">Found</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-box-open"></i>
+      <p>No found items reported yet.</p>
+      <a href="/report?type=found" class="btn-primary">Report Found Item</a>
+    </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
